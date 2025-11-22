@@ -40,4 +40,9 @@ class Store extends Model
     {
         return $this->hasMany(User::class);
     }
+
+    public function settings(): HasMany
+    {
+        return $this->hasMany(Setting::class);
+    }
 }

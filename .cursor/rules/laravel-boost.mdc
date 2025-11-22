@@ -41,6 +41,14 @@ This application is a Laravel application and its main Laravel ecosystems packag
 
 ## Documentation Files
 - You must only create documentation files if explicitly requested by the user.
+- **CRITICAL: API Documentation** - Whenever you add, modify, or remove API endpoints, controllers, form requests, or routes, you MUST update the `API_DOCUMENTATION.md` file to reflect these changes. This includes:
+  - Adding new endpoint documentation with request/response examples
+  - Updating existing endpoint documentation when fields, validation, or responses change
+  - Removing endpoint documentation when endpoints are deleted
+  - Updating the "Last Updated" date at the bottom of the documentation
+  - Ensuring all request fields (required and optional) are documented
+  - Including authentication and permission requirements
+  - Providing example request and response JSON
 
 
 === boost rules ===

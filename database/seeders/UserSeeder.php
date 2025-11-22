@@ -28,8 +28,8 @@ class UserSeeder extends Seeder
         );
 
         // Assign admin role to admin user
-        if (! $admin->hasRole('admin', 'sanctum')) {
-            $admin->assignRole('admin', 'sanctum');
+        if (! $admin->hasRole('admin')) {
+            $admin->assignRole('admin');
         }
 
         // Create test user
@@ -47,8 +47,8 @@ class UserSeeder extends Seeder
         );
 
         // Assign user role to test user
-        if (! $user->hasRole('user', 'sanctum')) {
-            $user->assignRole('user', 'sanctum');
+        if (! $user->hasRole('user')) {
+            $user->assignRole('user');
         }
 
         $this->command->info('Users seeded successfully!');
