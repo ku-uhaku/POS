@@ -17,30 +17,38 @@ class UserSeeder extends Seeder
         $admin = User::firstOrCreate(
             ['email' => 'admin@example.com'],
             [
-                'name' => 'Admin User',
+                'first_name' => 'Admin',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'employee_id' => 'EMP-00001',
+                'status' => 'active',
+                'hire_date' => now()->subYears(2),
             ]
         );
 
         // Assign admin role to admin user
-        if (! $admin->hasRole('admin')) {
-            $admin->assignRole('admin');
+        if (! $admin->hasRole('admin', 'sanctum')) {
+            $admin->assignRole('admin', 'sanctum');
         }
 
         // Create test user
         $user = User::firstOrCreate(
             ['email' => 'test@example.com'],
             [
-                'name' => 'Test User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
                 'password' => Hash::make('password'),
                 'email_verified_at' => now(),
+                'employee_id' => 'EMP-00002',
+                'status' => 'active',
+                'hire_date' => now()->subYear(),
             ]
         );
 
         // Assign user role to test user
-        if (! $user->hasRole('user')) {
-            $user->assignRole('user');
+        if (! $user->hasRole('user', 'sanctum')) {
+            $user->assignRole('user', 'sanctum');
         }
 
         $this->command->info('Users seeded successfully!');
@@ -48,4 +56,3 @@ class UserSeeder extends Seeder
         $this->command->info('Test: test@example.com / password (has user role)');
     }
 }
-

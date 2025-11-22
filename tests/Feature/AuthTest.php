@@ -9,7 +9,8 @@ beforeEach(function () {
 
 test('user can register with valid data', function () {
     $userData = [
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'test@example.com',
         'password' => 'password123',
     ];
@@ -23,7 +24,9 @@ test('user can register with valid data', function () {
             'data' => [
                 'user' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
                     'email',
                     'created_at',
                     'updated_at',
@@ -38,7 +41,8 @@ test('user can register with valid data', function () {
 
     $this->assertDatabaseHas('users', [
         'email' => 'test@example.com',
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
     ]);
 
     $user = User::where('email', 'test@example.com')->first();
@@ -47,7 +51,8 @@ test('user can register with valid data', function () {
 
 test('user cannot register with invalid email', function () {
     $userData = [
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'invalid-email',
         'password' => 'password123',
     ];
@@ -71,7 +76,8 @@ test('user cannot register with duplicate email', function () {
     User::factory()->create(['email' => 'existing@example.com']);
 
     $userData = [
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'existing@example.com',
         'password' => 'password123',
     ];
@@ -97,7 +103,7 @@ test('user cannot register without required fields', function () {
             'message',
             'errors',
         ])
-        ->assertJsonValidationErrors(['name', 'email', 'password']);
+        ->assertJsonValidationErrors(['first_name', 'last_name', 'email', 'password']);
 });
 
 test('user can login with valid credentials', function () {
@@ -120,7 +126,9 @@ test('user can login with valid credentials', function () {
             'data' => [
                 'user' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
                     'email',
                 ],
                 'token',
@@ -191,7 +199,9 @@ test('authenticated user can get their profile', function () {
             'data' => [
                 'user' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
                     'email',
                     'created_at',
                     'updated_at',
@@ -217,12 +227,14 @@ test('unauthenticated user cannot get profile', function () {
 
 test('authenticated user can update their profile', function () {
     $user = User::factory()->create([
-        'name' => 'Old Name',
+        'first_name' => 'Old',
+        'last_name' => 'Name',
         'email' => 'old@example.com',
     ]);
 
     $updateData = [
-        'name' => 'New Name',
+        'first_name' => 'New',
+        'last_name' => 'Name',
         'email' => 'new@example.com',
     ];
 
@@ -236,7 +248,9 @@ test('authenticated user can update their profile', function () {
             'data' => [
                 'user' => [
                     'id',
-                    'name',
+                    'first_name',
+                    'last_name',
+                    'full_name',
                     'email',
                 ],
             ],
@@ -246,7 +260,8 @@ test('authenticated user can update their profile', function () {
             'message' => 'Profile updated successfully',
             'data' => [
                 'user' => [
-                    'name' => 'New Name',
+                    'first_name' => 'New',
+                    'last_name' => 'Name',
                     'email' => 'new@example.com',
                 ],
             ],
@@ -254,19 +269,22 @@ test('authenticated user can update their profile', function () {
 
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
-        'name' => 'New Name',
+        'first_name' => 'New',
+        'last_name' => 'Name',
         'email' => 'new@example.com',
     ]);
 });
 
 test('authenticated user can update only name', function () {
     $user = User::factory()->create([
-        'name' => 'Old Name',
+        'first_name' => 'Old',
+        'last_name' => 'Name',
         'email' => 'test@example.com',
     ]);
 
     $updateData = [
-        'name' => 'New Name',
+        'first_name' => 'New',
+        'last_name' => 'Name',
     ];
 
     $response = $this->actingAs($user, 'sanctum')
@@ -276,7 +294,8 @@ test('authenticated user can update only name', function () {
 
     $this->assertDatabaseHas('users', [
         'id' => $user->id,
-        'name' => 'New Name',
+        'first_name' => 'New',
+        'last_name' => 'Name',
         'email' => 'test@example.com',
     ]);
 });
@@ -317,7 +336,8 @@ test('authenticated user cannot update email to existing email', function () {
 
 test('unauthenticated user cannot update profile', function () {
     $updateData = [
-        'name' => 'New Name',
+        'first_name' => 'New',
+        'last_name' => 'Name',
     ];
 
     $response = $this->putJson("{$this->baseUrl}/profile", $updateData);
@@ -365,4 +385,3 @@ test('user can logout and token is revoked', function () {
 
     expect($user->fresh()->tokens()->count())->toBe(0);
 });
-

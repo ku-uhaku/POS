@@ -11,17 +11,15 @@ use Illuminate\Support\Facades\Hash;
 
 class RegisterController extends Controller
 {
-
     /**
      * Handle user registration.
      */
     public function __invoke(RegisterRequest $request): JsonResponse
     {
-        $user = User::create([
-            'name' => $request->validated('name'),
-            'email' => $request->validated('email'),
-            'password' => Hash::make($request->validated('password')),
-        ]);
+        $validated = $request->validated();
+        $validated['password'] = Hash::make($validated['password']);
+
+        $user = User::create($validated);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -31,4 +29,3 @@ class RegisterController extends Controller
         ], 'User registered successfully');
     }
 }
-

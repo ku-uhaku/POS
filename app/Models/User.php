@@ -14,7 +14,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable, HasApiTokens, HasRoles, SoftDeletes, HasAuditTrail;
+    use HasApiTokens, HasAuditTrail, HasFactory, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * The default guard name for Spatie Permission.
@@ -27,9 +27,25 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'first_name',
+        'last_name',
         'email',
         'password',
+        'age',
+        'cin',
+        'gender',
+        'avatar',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'employee_id',
+        'hire_date',
+        'salary',
+        'status',
+        'store_id',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -55,6 +71,25 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'hire_date' => 'date',
+            'salary' => 'decimal:2',
+            'age' => 'integer',
         ];
+    }
+
+    /**
+     * Get the user's full name.
+     */
+    public function getFullNameAttribute(): string
+    {
+        return "{$this->first_name} {$this->last_name}";
+    }
+
+    /**
+     * Get the store that the user belongs to.
+     */
+    public function store()
+    {
+        return $this->belongsTo(Store::class);
     }
 }

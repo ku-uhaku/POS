@@ -98,7 +98,7 @@ test('admin can delete users', function () {
             'message' => 'User deleted successfully',
         ]);
 
-    $this->assertDatabaseMissing('users', ['id' => $userToDelete->id]);
+    $this->assertSoftDeleted('users', ['id' => $userToDelete->id]);
 });
 
 test('user without delete permission cannot delete users', function () {
@@ -253,10 +253,10 @@ test('user resource includes roles when loaded', function () {
         ->getJson('/api/v1/users');
 
     $response->assertStatus(200);
-    
+
     $users = $response->json('data.users');
     expect($users)->toBeArray();
-    
+
     if (count($users) > 0) {
         expect($users[0])->toHaveKey('roles');
     }
@@ -269,7 +269,7 @@ test('user can check their own permissions', function () {
         ->getJson('/api/v1/auth/profile');
 
     $response->assertStatus(200);
-    
+
     // Admin should have permissions
     expect($this->admin->can('view users'))->toBeTrue();
     expect($this->admin->can('delete users'))->toBeTrue();
@@ -285,4 +285,3 @@ test('user without role has no permissions', function () {
     expect($this->userWithoutRole->can('view users'))->toBeFalse();
     expect($this->userWithoutRole->can('delete users'))->toBeFalse();
 });
-

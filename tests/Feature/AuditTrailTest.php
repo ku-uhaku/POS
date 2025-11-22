@@ -8,7 +8,8 @@ test('audit trail sets created_by when creating a record', function () {
     $this->actingAs($admin, 'sanctum');
 
     $newUser = User::create([
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'test@audit.com',
         'password' => Hash::make('password'),
     ]);
@@ -25,7 +26,7 @@ test('audit trail sets updated_by when updating a record', function () {
     $updater = User::factory()->create();
     $this->actingAs($updater, 'sanctum');
 
-    $user->update(['name' => 'Updated Name']);
+    $user->update(['first_name' => 'Updated', 'last_name' => 'Name']);
 
     expect($user->fresh()->updated_by)->toBe($updater->id);
     expect($user->fresh()->created_by)->toBe($admin->id); // Should remain unchanged
@@ -66,17 +67,17 @@ test('audit trail relationships work correctly', function () {
     $this->actingAs($creator, 'sanctum');
 
     $user = User::create([
-        'name' => 'Test User',
+        'first_name' => 'Test',
+        'last_name' => 'User',
         'email' => 'test@relationships.com',
         'password' => Hash::make('password'),
     ]);
 
     $this->actingAs($updater, 'sanctum');
-    $user->update(['name' => 'Updated']);
+    $user->update(['first_name' => 'Updated', 'last_name' => 'Name']);
 
     $user->load(['creator', 'updater']);
 
     expect($user->creator->id)->toBe($creator->id);
     expect($user->updater->id)->toBe($updater->id);
 });
-

@@ -23,30 +23,36 @@ class RolePermissionSeeder extends Seeder
             'create users',
             'edit users',
             'delete users',
-            
+
             // Role management permissions
             'view roles',
             'create roles',
             'edit roles',
             'delete roles',
-            
+
             // Permission management permissions
             'view permissions',
             'create permissions',
             'edit permissions',
             'delete permissions',
-            
+
             // Product management permissions (example)
             'view products',
             'create products',
             'edit products',
             'delete products',
-            
+
             // Order management permissions (example)
             'view orders',
             'create orders',
             'edit orders',
             'delete orders',
+
+            // Store management permissions
+            'view stores',
+            'create stores',
+            'edit stores',
+            'delete stores',
         ];
 
         // Delete existing permissions and roles with wrong guard
@@ -81,4 +87,3 @@ class RolePermissionSeeder extends Seeder
         $this->command->info('User role has basic permissions (view products, view orders, create orders)');
     }
 }
-

@@ -23,10 +23,25 @@ class RegisterRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'max:255'],
+            'first_name' => ['required', 'string', 'max:255'],
+            'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'string', Password::defaults()],
+            'age' => ['sometimes', 'nullable', 'integer', 'min:1', 'max:150'],
+            'cin' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'gender' => ['sometimes', 'nullable', 'in:male,female,other'],
+            'avatar' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'phone' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'address' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'city' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'state' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'country' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'postal_code' => ['sometimes', 'nullable', 'string', 'max:255'],
+            'employee_id' => ['sometimes', 'nullable', 'string', 'max:255', 'unique:users,employee_id'],
+            'hire_date' => ['sometimes', 'nullable', 'date'],
+            'salary' => ['sometimes', 'nullable', 'numeric', 'min:0'],
+            'status' => ['sometimes', 'nullable', 'in:active,inactive,suspended'],
+            'store_id' => ['sometimes', 'nullable', 'exists:stores,id'],
         ];
     }
 }
-

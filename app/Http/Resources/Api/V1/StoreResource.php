@@ -5,7 +5,7 @@ namespace App\Http\Resources\Api\V1;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class StoreResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -16,42 +16,27 @@ class UserResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'first_name' => $this->first_name,
-            'last_name' => $this->last_name,
-            'full_name' => $this->full_name,
-            'email' => $this->email,
-            'email_verified_at' => $this->email_verified_at?->toIso8601String(),
-            'age' => $this->age,
-            'cin' => $this->cin,
-            'gender' => $this->gender,
-            'avatar' => $this->avatar,
-            'phone' => $this->phone,
+            'name' => $this->name,
+            'code' => $this->code,
             'address' => $this->address,
             'city' => $this->city,
             'state' => $this->state,
             'country' => $this->country,
             'postal_code' => $this->postal_code,
-            'employee_id' => $this->employee_id,
-            'hire_date' => $this->hire_date?->toDateString(),
-            'salary' => $this->salary,
+            'phone' => $this->phone,
+            'email' => $this->email,
             'status' => $this->status,
-            'store' => $this->whenLoaded('store', function () {
-                return [
-                    'id' => $this->store->id,
-                    'name' => $this->store->name,
-                    'code' => $this->store->code,
-                ];
-            }),
-            'roles' => $this->whenLoaded('roles', function () {
-                return $this->roles->map(function ($role) {
+            'users_count' => $this->whenCounted('users'),
+            'users' => $this->whenLoaded('users', function () {
+                return $this->users->map(function ($user) {
                     return [
-                        'id' => $role->id,
-                        'name' => $role->name,
+                        'id' => $user->id,
+                        'first_name' => $user->first_name,
+                        'last_name' => $user->last_name,
+                        'full_name' => $user->full_name,
+                        'email' => $user->email,
                     ];
                 });
-            }),
-            'permissions' => $this->when($request->user()?->can('view permissions'), function () {
-                return $this->getAllPermissions()->pluck('name');
             }),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
