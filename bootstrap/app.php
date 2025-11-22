@@ -41,4 +41,22 @@ return Application::configure(basePath: dirname(__DIR__))
                 ], 401);
             }
         });
+
+        $exceptions->render(function (\Spatie\Permission\Exceptions\UnauthorizedException $e, $request) {
+            if ($request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'You do not have the required permission to perform this action.',
+                ], 403);
+            }
+        });
+
+        $exceptions->render(function (\Symfony\Component\HttpKernel\Exception\HttpException $e, $request) {
+            if ($request->is('api/*') && $e->getStatusCode() === 403) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage() ?: 'You do not have the required permission to perform this action.',
+                ], 403);
+            }
+        });
     })->create();
