@@ -27,6 +27,7 @@ class UserResource extends JsonResource
             'avatar' => $this->avatar,
             'phone' => $this->phone,
             'address' => $this->address,
+            'default_store' => $this->default_store_id,
             'city' => $this->city,
             'state' => $this->state,
             'country' => $this->country,
@@ -35,24 +36,16 @@ class UserResource extends JsonResource
             'hire_date' => $this->hire_date?->toDateString(),
             'salary' => $this->salary,
             'status' => $this->status,
-            'store' => $this->whenLoaded('store', function () {
-                return [
-                    'id' => $this->store->id,
-                    'name' => $this->store->name,
-                    'code' => $this->store->code,
-                ];
-            }),
-            'roles' => $this->whenLoaded('roles', function () {
-                return $this->roles->map(function ($role) {
-                    return [
-                        'id' => $role->id,
-                        'name' => $role->name,
-                    ];
-                });
-            }),
-            'permissions' => $this->when($request->user()?->can('view permissions'), function () {
-                return $this->getAllPermissions()->pluck('name');
-            }),
+            'roles' => $this->roles->map(fn ($role) => [
+                'id' => $role->id,
+                'name' => $role->name,
+            ]),
+            'store' => $this->stores->map(fn ($store) => [
+                'id' => $store->id,
+                'name' => $store->name,
+                'code' => $store->code,
+            ]),
+            'permissions' => $this->getAllPermissions()->pluck('name'),
             'created_at' => $this->created_at->toIso8601String(),
             'updated_at' => $this->updated_at->toIso8601String(),
             'created_by' => $this->when($this->created_by, $this->created_by),
