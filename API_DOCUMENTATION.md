@@ -695,6 +695,65 @@ Soft delete a store.
 
 ---
 
+## Contact Endpoints
+
+### List Contacts
+**GET** `/contacts`
+
+**Authentication:** Required  
+**Permission:** `view contacts`
+
+Retrieve a paginated list of client and supplier contacts scoped to stores the authenticated user can access.
+
+**Query Parameters:**
+- `type` (enum: `client`, `supplier`, optional) – Filter by contact type.
+- `client_type` (enum: `individual`, `company`, `government`, `nonprofit`, optional) – Filter by client classification.
+- `store_id` (integer, optional) – Limit results to a specific store the user can access.
+- `search` (string, optional) – Matches `contact_name`, `company_name`, `email`, `phone`, or `mobile`.
+- `per_page` (integer, optional, 1-100, default 15) – Results per page.
+
+**Response:** `200 OK`
+```json
+{
+    "success": true,
+    "message": "Contacts retrieved successfully.",
+    "data": {
+        "contacts": [
+            {
+                "id": 42,
+                "store_id": 3,
+                "type": "client",
+                "client_type": "individual",
+                "company_name": null,
+                "contact_name": "Jane Roe",
+                "email": "jane.roe@example.com",
+                "phone": "+1-555-123-4567",
+                "mobile": "+1-555-555-0000",
+                "address": "400 Market St",
+                "city": "Metropolis",
+                "state": "NY",
+                "country": "USA",
+                "postal_code": "10001",
+                "tax_id": "TAX-1234",
+                "notes": "Prefers email updates",
+                "created_at": "2025-11-24T15:18:52.000000Z",
+                "updated_at": "2025-11-24T15:18:52.000000Z"
+            }
+        ],
+        "pagination": {
+            "current_page": 1,
+            "last_page": 4,
+            "per_page": 15,
+            "total": 45
+        }
+    }
+}
+```
+
+**Validation Errors:** When invalid filters are provided, a `422 Unprocessable Entity` response is returned with the relevant field errors.
+
+---
+
 ## Error Codes
 
 ### 401 Unauthorized
@@ -768,7 +827,7 @@ Returned when a resource is not found.
 
 ---
 
-**Last Updated:** 2024-11-22
+**Last Updated:** 2025-11-24
 
 ## Store Context Notes
 

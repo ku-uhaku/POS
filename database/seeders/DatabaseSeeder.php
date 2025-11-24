@@ -18,6 +18,7 @@ class DatabaseSeeder extends Seeder
             RolePermissionSeeder::class,
             StoreSeeder::class, // Stores must be created before users
             UserSeeder::class,
+            ContactSeeder::class,
             SettingSeeder::class,
             StoreContextDemoSeeder::class,
         ]);

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Auth\LoginController;
 use App\Http\Controllers\Api\V1\Auth\LogoutController;
 use App\Http\Controllers\Api\V1\Auth\ProfileController;
 use App\Http\Controllers\Api\V1\Auth\RegisterController;
+use App\Http\Controllers\Api\V1\ContactController;
 use App\Http\Controllers\Api\V1\RoleController;
 use App\Http\Controllers\Api\V1\StoreController;
 use App\Http\Controllers\Api\V1\UserController;
@@ -44,4 +45,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Store management routes
     Route::apiResource('stores', StoreController::class);
     Route::post('stores/switch', [StoreController::class, 'switchStore']);
+
+    // Contact routes
+    Route::get('contacts', [ContactController::class, 'index']);
 });

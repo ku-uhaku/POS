@@ -53,6 +53,9 @@ class RolePermissionSeeder extends Seeder
             'create stores',
             'edit stores',
             'delete stores',
+
+            // Contact management permissions
+            'view contacts',
         ];
 
         // Delete existing permissions and roles with wrong guard
@@ -78,7 +81,7 @@ class RolePermissionSeeder extends Seeder
         // Assign basic permissions to user role
         $userRole->syncPermissions(
             Permission::where('guard_name', 'sanctum')
-                ->whereIn('name', ['view users', 'view products', 'view orders', 'create orders'])
+                ->whereIn('name', ['view users', 'view products', 'view orders', 'create orders', 'view contacts'])
                 ->get()
         );
 
