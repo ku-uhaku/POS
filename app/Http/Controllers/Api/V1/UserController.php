@@ -19,7 +19,6 @@ class UserController extends Controller
         if (! auth('sanctum')->user()->can('view users')) {
             abort(403, 'You do not have the required permission to perform this action.vsss');
         }
-
         $activeStoreId = StoreContext::getActiveStore();
 
         $usersQuery = User::with(['roles', 'store', 'defaultStore', 'stores']);

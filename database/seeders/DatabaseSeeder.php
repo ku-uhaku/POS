@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
             StoreSeeder::class, // Stores must be created before users
             UserSeeder::class,
             SettingSeeder::class,
+            StoreContextDemoSeeder::class,
         ]);
     }
 }
