@@ -23,25 +23,27 @@ class StoreContextMiddleware
 
         $user = auth('sanctum')->user() ?? auth()->user();
 
-        // Check if X-Store-ID header is provided
-        $storeId = $request->header('X-Store-ID');
+        // Always start with the user's default store (if any)
+        if ($user->default_store_id) {
+            StoreContext::setActiveStore($user->default_store_id);
+        }
 
-        if ($storeId) {
+        // Check if X-Store-ID header is provided to override the default
+        $storeIdFromHeader = $request->header('X-Store-ID');
+
+        if ($storeIdFromHeader !== null && $storeIdFromHeader !== '') {
+            $requestedStoreId = (int) $storeIdFromHeader;
+
             // Validate that the user has access to this store
-            if (! $user->hasAccessToStore((int) $storeId)) {
+            if (! $user->hasAccessToStore($requestedStoreId)) {
                 return response()->json([
                     'success' => false,
                     'message' => 'You do not have access to this store.',
                 ], 403);
             }
 
-            // Set the active store
-            StoreContext::setActiveStore((int) $storeId);
-        } else {
-            // Fall back to user's default store
-            if ($user->default_store_id) {
-                StoreContext::setActiveStore($user->default_store_id);
-            }
+            // Override the active store
+            StoreContext::setActiveStore($requestedStoreId);
         }
 
         return $next($request);

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\UserResource;
 use App\Models\User;
+use App\Services\StoreContext;
 use Illuminate\Http\JsonResponse;
 
 class UserController extends Controller
@@ -15,12 +16,25 @@ class UserController extends Controller
      */
     public function index(): JsonResponse
     {
-        
         if (! auth('sanctum')->user()->can('view users')) {
             abort(403, 'You do not have the required permission to perform this action.vsss');
         }
 
-        $users = User::with('roles')->paginate(15);
+        $activeStoreId = StoreContext::getActiveStore();
+
+        $usersQuery = User::with(['roles', 'store', 'defaultStore', 'stores']);
+
+        if ($activeStoreId) {
+            $usersQuery->where(function ($query) use ($activeStoreId) {
+                $query->where('store_id', $activeStoreId)
+                    ->orWhere('default_store_id', $activeStoreId)
+                    ->orWhereHas('stores', function ($storeQuery) use ($activeStoreId) {
+                        $storeQuery->where('stores.id', $activeStoreId);
+                    });
+            });
+        }
+
+        $users = $usersQuery->paginate(15);
 
         return $this->successResponse([
             'users' => UserResource::collection($users),
@@ -43,8 +57,14 @@ class UserController extends Controller
             abort(403, 'You do not have the required permission to perform this action.');
         }
 
+        $activeStoreId = StoreContext::getActiveStore();
+
+        if ($activeStoreId && ! $user->hasAccessToStore($activeStoreId)) {
+            abort(403, 'You do not have access to this user.');
+        }
+
         return $this->successResponse([
-            'user' => new UserResource($user->load('roles')),
+            'user' => new UserResource($user->load(['roles', 'store', 'defaultStore', 'stores'])),
         ], 'User retrieved successfully');
     }
 
@@ -58,9 +78,14 @@ class UserController extends Controller
             abort(403, 'You do not have the required permission to perform this action.');
         }
 
+        $activeStoreId = StoreContext::getActiveStore();
+
+        if ($activeStoreId && ! $user->hasAccessToStore($activeStoreId)) {
+            abort(403, 'You do not have access to this user.');
+        }
+
         $user->delete();
 
         return $this->successResponse(null, 'User deleted successfully');
     }
 }
-

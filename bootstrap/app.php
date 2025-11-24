@@ -23,6 +23,10 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'store.context' => \App\Http\Middleware\StoreContextMiddleware::class,
         ]);
+
+        $middleware->api(prepend: [
+            \App\Http\Middleware\StoreContextMiddleware::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (ValidationException $e, $request) {

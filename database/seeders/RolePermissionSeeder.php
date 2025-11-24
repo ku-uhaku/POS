@@ -78,7 +78,7 @@ class RolePermissionSeeder extends Seeder
         // Assign basic permissions to user role
         $userRole->syncPermissions(
             Permission::where('guard_name', 'sanctum')
-                ->whereIn('name', ['view products', 'view orders', 'create orders'])
+                ->whereIn('name', ['view users', 'view products', 'view orders', 'create orders'])
                 ->get()
         );
 

@@ -24,6 +24,11 @@ Route::prefix('auth')->group(function () {
 
 // Protected routes with permission checks
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('test', function () {
+        return response()->json([
+            'message' => 'Hello World',
+        ]);
+    });
     // User management routes
     Route::apiResource('users', UserController::class)->only(['index', 'show', 'destroy']);
 

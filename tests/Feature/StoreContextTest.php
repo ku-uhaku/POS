@@ -40,9 +40,8 @@ test('middleware sets active store from X-Store-ID header', function () {
 
     $response->assertStatus(200);
 
-    // Note: StoreContext is request-scoped, so we verify the response contains store2 data
-    $stores = $response->json('data.stores');
-    expect($stores)->toBeArray();
+    // StoreContext should now be set to store2
+    expect(StoreContext::getActiveStore())->toBe($this->store2->id);
 });
 
 test('middleware falls back to default store when header not provided', function () {
@@ -55,6 +54,45 @@ test('middleware falls back to default store when header not provided', function
 
     // Verify StoreContext has the default store
     expect(StoreContext::getActiveStore())->toBe($this->user->default_store_id);
+});
+
+test('users index filters results by default active store', function () {
+    $token = $this->user->createToken('test-token')->plainTextToken;
+
+    $store1User = User::factory()->create(['store_id' => $this->store1->id]);
+    $store1User->stores()->attach($this->store1->id);
+
+    $store2User = User::factory()->create(['store_id' => $this->store2->id]);
+    $store2User->stores()->attach($this->store2->id);
+
+    $response = $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson('/api/v1/users');
+
+    $response->assertStatus(200);
+
+    $ids = collect($response->json('data.users'))->pluck('id');
+    expect($ids)->toContain($store1User->id);
+    expect($ids)->not->toContain($store2User->id);
+});
+
+test('users index can switch stores via X-Store-ID header', function () {
+    $token = $this->user->createToken('test-token')->plainTextToken;
+
+    $store1User = User::factory()->create(['store_id' => $this->store1->id]);
+    $store1User->stores()->attach($this->store1->id);
+
+    $store2User = User::factory()->create(['store_id' => $this->store2->id]);
+    $store2User->stores()->attach($this->store2->id);
+
+    $response = $this->withHeader('Authorization', "Bearer {$token}")
+        ->withHeader('X-Store-ID', (string) $this->store2->id)
+        ->getJson('/api/v1/users');
+
+    $response->assertStatus(200);
+
+    $ids = collect($response->json('data.users'))->pluck('id');
+    expect($ids)->toContain($store2User->id);
+    expect($ids)->not->toContain($store1User->id);
 });
 
 test('middleware rejects access to store user does not have access to', function () {
