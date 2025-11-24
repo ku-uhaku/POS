@@ -1,0 +1,138 @@
+---
+alwaysApply: true
+---
+
+# BelongsToStore Trait - Store Scoping Rules
+
+## CRITICAL: Always Use BelongsToStore Scopes for Store Filtering
+
+When filtering data by store in controllers, queries, or any database operations, you MUST use the scopes provided by the `BelongsToStore` trait. Never manually write `where('store_id', ...)` or `whereIn('store_id', ...)` logic.
+
+## Available Scopes
+
+The `BelongsToStore` trait provides the following scopes for filtering by store:
+
+### 1. `forActiveStoreWithAccess()` - RECOMMENDED for most cases
+Filters by the active store context (from `X-Store-ID` header or user's `default_store_id`) with access validation.
+
+**Usage:**
+```php
+// In controllers - filters by active store automatically
+Contact::forActiveStoreWithAccess($user)->get();
+
+// Works with other scopes
+Contact::forActiveStoreWithAccess($user)
+    ->ofType('client')
+    ->search('John')
+    ->paginate();
+```
+
+**When to use:**
+- When you want to filter by the current store context (respects X-Store-ID header)
+- Default choice for most API endpoints
+- Automatically validates user access to the store
+
+### 2. `forStoreWithAccess($storeId, $user)`
+Filters by a specific store ID with access validation.
+
+**Usage:**
+```php
+// When filtering by a specific store_id from request
+if ($request->has('store_id')) {
+    $query->forStoreWithAccess($request->store_id, $user);
+}
+```
+
+**When to use:**
+- When filtering by a specific store_id from query parameters or request body
+- Always validates user access before filtering
+
+### 3. `forAccessibleStores($user)`
+Filters by ALL stores the user can access (store_id, default_store_id, and many-to-many stores).
+
+**Usage:**
+```php
+// When you need data from all accessible stores
+Contact::forAccessibleStores($user)->get();
+```
+
+**When to use:**
+- When you need to show data from all stores the user has access to
+- Use sparingly - prefer `forActiveStoreWithAccess()` for most cases
+
+### 4. `forActiveStore()`
+Filters by active store without access validation (use with caution).
+
+**Usage:**
+```php
+Contact::forActiveStore()->get();
+```
+
+**When to use:**
+- Only when you don't need access validation
+- Generally prefer `forActiveStoreWithAccess()` instead
+
+## Controller Examples
+
+### ✅ CORRECT - Using trait scopes:
+```php
+public function index(ContactIndexRequest $request): JsonResponse
+{
+    $user = $request->user();
+    $filters = $request->filters();
+    
+    $query = Contact::query()
+        ->ofType($filters['type'])
+        ->search($filters['search']);
+    
+    // Use trait scope instead of manual filtering
+    if ($filters['store_id']) {
+        if (! $user->hasAccessToStore($filters['store_id'])) {
+            return $this->forbiddenResponse('You do not have access to this store.');
+        }
+        $query->forStoreWithAccess($filters['store_id'], $user);
+    } else {
+        $query->forActiveStoreWithAccess($user);
+    }
+    
+    $contacts = $query->paginate();
+    // ...
+}
+```
+
+### ❌ WRONG - Manual store filtering:
+```php
+// DON'T DO THIS
+$query->where('store_id', $activeStoreId);
+$query->whereIn('store_id', $accessibleStoreIds);
+$query->where('store_id', $user->default_store_id);
+```
+
+## Rules
+
+1. **ALWAYS use `forActiveStoreWithAccess()`** when filtering by the active store context (default behavior)
+2. **ALWAYS use `forStoreWithAccess()`** when filtering by a specific store_id from request parameters
+3. **NEVER manually write** `where('store_id', ...)` or `whereIn('store_id', ...)` in controllers or queries
+4. **ALWAYS validate access** before filtering by a specific store_id (the scopes handle this automatically)
+5. Models using `BelongsToStore` trait automatically get these scopes - no need to import anything
+
+## Models That Use BelongsToStore
+
+- `Contact`
+- `Setting`
+- Any other model that has a `store_id` foreign key and uses the `BelongsToStore` trait
+
+## Store Context Flow
+
+1. Middleware (`StoreContextMiddleware`) sets active store from `X-Store-ID` header or user's `default_store_id`
+2. `StoreContext::getActiveStore()` retrieves the active store ID
+3. `forActiveStoreWithAccess()` uses this context automatically
+4. Access validation ensures user can only see stores they have permission to access
+
+## Migration Checklist
+
+When creating new models that belong to stores:
+1. Add `use BelongsToStore;` trait to the model
+2. Include `store_id` in `$fillable` array
+3. Add foreign key in migration: `$table->foreignId('store_id')->nullable()->constrained('stores')->nullOnDelete();`
+4. Use `forActiveStoreWithAccess()` in controllers when querying the model

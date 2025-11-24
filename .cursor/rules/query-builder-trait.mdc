@@ -1,0 +1,233 @@
+---
+alwaysApply: true
+---
+
+# HasQueryBuilder Trait - Query Building Rules
+
+## CRITICAL: Always Use HasQueryBuilder Methods for Common Query Operations
+
+When building database queries in controllers or models, you MUST use the methods provided by the `HasQueryBuilder` trait or the registered query builder macros. This ensures consistency, reduces code duplication, and makes queries more maintainable.
+
+## Available Methods
+
+The `HasQueryBuilder` trait provides the following scopes that can be used on any model or query builder:
+
+### 1. `bulkFilter(array $filters)` - Apply Multiple Filters at Once
+Applies multiple filter conditions in a single call. Supports exact match, `in` operations, and date ranges.
+
+**Usage:**
+```php
+// Single filters
+Contact::query()->bulkFilter(['type' => 'client', 'client_type' => 'company'])->get();
+
+// Array values (for 'in' operations)
+Contact::query()->bulkFilter(['type' => ['client', 'supplier']])->get();
+
+// Date ranges
+Contact::query()->bulkFilter([
+    'created_at' => ['from' => '2024-01-01', 'to' => '2024-12-31']
+])->get();
+```
+
+**When to use:**
+- When applying multiple filters from request parameters
+- When you need to filter by multiple conditions
+- Default choice for filtering operations
+
+### 2. `selectFields(array|string $fields)` - Select Specific Columns
+Selects only the specified columns from the query.
+
+**Usage:**
+```php
+// Array of fields
+Contact::query()->selectFields(['id', 'name', 'email'])->get();
+
+// Comma-separated string
+Contact::query()->selectFields('id, name, email')->get();
+```
+
+**When to use:**
+- When you only need specific columns (performance optimization)
+- When building API responses with limited fields
+
+### 3. `applySorting(string|array $sort, string $defaultDirection = 'desc')` - Apply Sorting
+Applies sorting to the query with sensible defaults.
+
+**Usage:**
+```php
+// Single field
+Contact::query()->applySorting('name', 'asc')->get();
+
+// Multiple fields
+Contact::query()->applySorting([
+    'name' => 'asc',
+    'created_at' => 'desc'
+])->get();
+```
+
+**When to use:**
+- When sorting query results
+- When handling sort parameters from requests
+- Default: sorts by 'id' descending if no parameter provided
+
+### 4. `search(array $columns, ?string $searchTerm, string $operator = 'like')` - Search Across Columns
+Searches for a term across multiple columns using LIKE or other operators.
+
+**Usage:**
+```php
+Contact::query()->search(
+    ['contact_name', 'company_name', 'email'],
+    'john'
+)->get();
+```
+
+**When to use:**
+- When implementing search functionality
+- When searching across multiple fields
+- Automatically handles LIKE wildcards
+
+### 5. `dateRange(string $column, ?string $startDate, ?string $endDate)` - Date Range Filtering
+Filters records within a date range.
+
+**Usage:**
+```php
+Contact::query()->dateRange('created_at', '2024-01-01', '2024-12-31')->get();
+
+// Only start date
+Contact::query()->dateRange('created_at', '2024-01-01')->get();
+```
+
+**When to use:**
+- When filtering by date ranges
+- When handling date filter parameters
+
+### 6. `paginateWithDefaults(?int $perPage, array $columns, string $pageName, ?int $page)` - Pagination with Defaults
+Paginates results with sensible defaults (defaults to 15 per page, clamped between 1-100).
+
+**Usage:**
+```php
+Contact::query()->paginateWithDefaults(20)->get();
+
+// Uses default (15) if not specified
+Contact::query()->paginateWithDefaults()->get();
+```
+
+**When to use:**
+- When paginating query results
+- Automatically handles per_page limits (1-100)
+- Default: 15 items per page
+
+### 7. `withRelations(array|string $relations)` - Eager Load Relationships
+Eager loads relationships with optional constraints.
+
+**Usage:**
+```php
+// Array
+Contact::query()->withRelations(['store', 'user'])->get();
+
+// Comma-separated string
+Contact::query()->withRelations('store, user')->get();
+```
+
+**When to use:**
+- When eager loading relationships
+- Prevents N+1 query problems
+- Alternative to `with()` method
+
+### 8. `applyRequestFilters(array $requestFilters, array $fieldMapping = [])` - Apply Request Filters with Mapping
+Applies filters from request with optional field name mapping.
+
+**Usage:**
+```php
+// Direct mapping
+Contact::query()->applyRequestFilters($request->all())->get();
+
+// With field mapping (request key => database column)
+Contact::query()->applyRequestFilters(
+    $request->all(),
+    ['search_term' => 'name', 'status_filter' => 'status']
+)->get();
+```
+
+**When to use:**
+- When applying filters directly from request
+- When request field names differ from database columns
+- Combines with `bulkFilter` internally
+
+## Controller Examples
+
+### ✅ CORRECT - Using HasQueryBuilder methods:
+```php
+public function index(Request $request): JsonResponse
+{
+    $query = Contact::query()
+        ->withRelations('store')
+        ->bulkFilter([
+            'type' => $request->input('type'),
+            'client_type' => $request->input('client_type'),
+        ])
+        ->search(['contact_name', 'email'], $request->input('search'))
+        ->applySorting($request->input('sort', 'updated_at'), 'desc')
+        ->paginateWithDefaults($request->input('per_page'));
+    
+    return $this->successResponse($query);
+}
+```
+
+### ❌ WRONG - Manual query building:
+```php
+// DON'T DO THIS
+$query = Contact::query();
+if ($request->has('type')) {
+    $query->where('type', $request->input('type'));
+}
+if ($request->has('client_type')) {
+    $query->where('client_type', $request->input('client_type'));
+}
+// ... etc
+```
+
+## Rules
+
+1. **ALWAYS use `bulkFilter()`** when applying multiple filters from request parameters
+2. **ALWAYS use `search()`** when implementing search functionality across multiple columns
+3. **ALWAYS use `applySorting()`** when sorting query results
+4. **ALWAYS use `paginateWithDefaults()`** when paginating results
+5. **ALWAYS use `withRelations()`** when eager loading relationships (alternative to `with()`)
+6. **NEVER manually write** multiple `where()` clauses when `bulkFilter()` can be used
+7. **NEVER manually write** complex search logic when `search()` can be used
+8. Models using `HasQueryBuilder` trait automatically get these scopes
+9. Query builder macros are available globally on any Eloquent query builder
+
+## Using as Macros (Global)
+
+The same methods are also available as query builder macros, so you can use them on any query:
+
+```php
+// Works on any query builder
+DB::table('contacts')->bulkFilter(['type' => 'client'])->get();
+
+// Works with Eloquent models
+Contact::query()->bulkFilter(['type' => 'client'])->get();
+```
+
+## Combining with Other Traits
+
+The `HasQueryBuilder` trait works seamlessly with other traits:
+
+```php
+Contact::query()
+    ->forActiveStoreWithAccess($user)  // From BelongsToStore trait
+    ->bulkFilter(['type' => 'client'])  // From HasQueryBuilder trait
+    ->search(['name', 'email'], 'john')  // From HasQueryBuilder trait
+    ->paginateWithDefaults(20);  // From HasQueryBuilder trait
+```
+
+## Migration Checklist
+
+When creating new models that need query building:
+1. Add `use HasQueryBuilder;` trait to the model
+2. Use trait methods in controllers instead of manual query building
+3. Prefer trait methods over custom scopes when possible
+4. Use `bulkFilter()` for request parameter filtering
+5. Use `paginateWithDefaults()` for pagination

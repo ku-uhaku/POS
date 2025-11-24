@@ -19,13 +19,19 @@ class ContactController extends Controller
         $filters = $request->filters();
         $perPage = $request->perPage();
 
+        // Build query using HasQueryBuilder trait methods
         $query = Contact::query()
-            ->with('store')
-            ->ofType($filters['type'])
-            ->ofClientType($filters['client_type'])
-            ->search($filters['search']);
+            ->withRelations('store')
+            ->bulkFilter([
+                'type' => $filters['type'],
+                'client_type' => $filters['client_type'],
+            ])
+            ->search(
+                ['contact_name', 'company_name', 'email', 'phone', 'mobile'],
+                $filters['search']
+            );
 
-        // Apply store filtering using the trait's automatic scoping
+        // Apply store filtering using the BelongsToStore trait's automatic scoping
         if ($filters['store_id']) {
             // If specific store_id requested, validate access and filter
             if (! $user->hasAccessToStore($filters['store_id'])) {
@@ -38,9 +44,10 @@ class ContactController extends Controller
             $query->forActiveStoreWithAccess($user);
         }
 
+        // Apply sorting and pagination
         $contacts = $query
-            ->orderByDesc('updated_at')
-            ->paginate($perPage);
+            ->applySorting('updated_at', 'desc')
+            ->paginateWithDefaults($perPage);
 
         return $this->successResponse([
             'contacts' => ContactResource::collection($contacts),

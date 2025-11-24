@@ -5,8 +5,12 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\StoreRequest;
 use App\Http\Resources\Api\V1\StoreResource;
+use App\Http\Resources\Api\V1\UserResource;
 use App\Models\Store;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class StoreController extends Controller
 {
@@ -110,7 +114,7 @@ class StoreController extends Controller
      * Switch active store for the current user.
      * Note: The actual switching happens via X-Store-ID header on subsequent requests.
      */
-    public function switchStore(\Illuminate\Http\Request $request): JsonResponse
+    public function switchStore(Request $request): JsonResponse
     {
         $user = auth('sanctum')->user();
 
@@ -127,9 +131,11 @@ class StoreController extends Controller
 
         $store = Store::findOrFail($storeId);
 
-        return $this->successResponse([
-            'store' => new StoreResource($store),
-            'message' => 'Store switched successfully. Use X-Store-ID header in subsequent requests.',
-        ], 'Store switched successfully');
+        User::findOrFail(Auth::id())->setDefaultStore($storeId);
+
+        return $this->successResponse(
+            data: UserResource::make($user),
+            message: 'Store switched successfully'
+        );
     }
 }
