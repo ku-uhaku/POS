@@ -22,6 +22,7 @@ class StoreContext
      */
     public static function getActiveStore(): ?int
     {
+
         if (static::$activeStoreId !== null) {
             return static::$activeStoreId;
         }
@@ -73,4 +74,3 @@ class StoreContext
         return static::getActiveStore() !== null;
     }
 }
-

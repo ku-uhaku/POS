@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Api\V1\ContactIndexRequest;
 use App\Http\Resources\Api\V1\ContactResource;
 use App\Models\Contact;
-use App\Models\User;
 use Illuminate\Http\JsonResponse;
 
 class ContactController extends Controller
@@ -26,20 +25,17 @@ class ContactController extends Controller
             ->ofClientType($filters['client_type'])
             ->search($filters['search']);
 
+        // Apply store filtering using the trait's automatic scoping
         if ($filters['store_id']) {
+            // If specific store_id requested, validate access and filter
             if (! $user->hasAccessToStore($filters['store_id'])) {
                 return $this->forbiddenResponse('You do not have access to this store.');
             }
 
-            $query->where('store_id', $filters['store_id']);
+            $query->forStoreWithAccess($filters['store_id'], $user);
         } else {
-            $accessibleStoreIds = $this->resolveAccessibleStoreIds($user);
-
-            if (empty($accessibleStoreIds)) {
-                $query->whereRaw('1 = 0');
-            } else {
-                $query->whereIn('store_id', $accessibleStoreIds);
-            }
+            // Otherwise, filter by active store (from X-Store-ID header or default_store_id)
+            $query->forActiveStoreWithAccess($user);
         }
 
         $contacts = $query
@@ -55,25 +51,5 @@ class ContactController extends Controller
                 'total' => $contacts->total(),
             ],
         ], 'Contacts retrieved successfully.');
-    }
-
-    /**
-     * Resolve the list of store IDs the user can access.
-     *
-     * @return array<int,int>
-     */
-    private function resolveAccessibleStoreIds(User $user): array
-    {
-        $storeIds = collect([$user->store_id, $user->default_store_id])
-            ->filter()
-            ->map(fn ($id) => (int) $id);
-
-        $relationStoreIds = $user->stores()->pluck('stores.id')->map(fn ($id) => (int) $id);
-
-        return $storeIds
-            ->merge($relationStoreIds)
-            ->unique()
-            ->values()
-            ->all();
     }
 }
