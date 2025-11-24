@@ -46,6 +46,7 @@ class User extends Authenticatable
         'salary',
         'status',
         'store_id',
+        'default_store_id',
         'created_by',
         'updated_by',
         'deleted_by',
@@ -86,10 +87,66 @@ class User extends Authenticatable
     }
 
     /**
-     * Get the store that the user belongs to.
+     * Get the store that the user belongs to (legacy - for backward compatibility).
      */
     public function store()
     {
         return $this->belongsTo(Store::class);
+    }
+
+    /**
+     * Get the user's default store.
+     */
+    public function defaultStore()
+    {
+        return $this->belongsTo(Store::class, 'default_store_id');
+    }
+
+    /**
+     * Get all stores the user has access to (many-to-many).
+     */
+    public function stores()
+    {
+        return $this->belongsToMany(Store::class, 'user_store')
+            ->withTimestamps();
+    }
+
+    /**
+     * Get stores where the user is an employee (legacy - single store assignment).
+     */
+    public function employeeStore()
+    {
+        return $this->belongsTo(Store::class, 'store_id');
+    }
+
+    /**
+     * Check if user has access to a specific store.
+     */
+    public function hasAccessToStore(int $storeId): bool
+    {
+        // Check if user is assigned to this store via many-to-many
+        if ($this->stores()->where('stores.id', $storeId)->exists()) {
+            return true;
+        }
+
+        // Fallback: check if it's the user's employee store (legacy)
+        if ($this->store_id === $storeId) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Set the user's default store.
+     */
+    public function setDefaultStore(int $storeId): void
+    {
+        // Verify user has access to this store
+        if (! $this->hasAccessToStore($storeId)) {
+            throw new \InvalidArgumentException('User does not have access to this store.');
+        }
+
+        $this->update(['default_store_id' => $storeId]);
     }
 }

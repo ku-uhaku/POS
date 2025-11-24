@@ -15,8 +15,9 @@ class UserController extends Controller
      */
     public function index(): JsonResponse
     {
+        
         if (! auth('sanctum')->user()->can('view users')) {
-            abort(403, 'You do not have the required permission to perform this action.');
+            abort(403, 'You do not have the required permission to perform this action.vsss');
         }
 
         $users = User::with('roles')->paginate(15);

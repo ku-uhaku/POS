@@ -11,6 +11,14 @@ All protected endpoints require authentication using Bearer token in the Authori
 Authorization: Bearer {token}
 ```
 
+## Store Context
+For multi-store users, you can specify which store context to use by including the `X-Store-ID` header:
+```
+X-Store-ID: {store_id}
+```
+
+If the header is not provided, the system will automatically use the user's default store. All data queries will be filtered by the active store context. Users can only access stores they are assigned to.
+
 ## Response Format
 All API responses follow a consistent format:
 
@@ -748,7 +756,25 @@ Returned when a resource is not found.
 - Audit trail information (created_by, updated_by, deleted_by) is included in resources when available
 - The `full_name` field is a computed attribute combining `first_name` and `last_name`
 
+## Store Context Notes
+
+- Users can be assigned to multiple stores via the many-to-many relationship
+- Each user has a default store that is used when `X-Store-ID` header is not provided
+- The active store context automatically filters all data queries for models using the `BelongsToStore` trait
+- Users can only access stores they are assigned to
+- Store switching is done via the `X-Store-ID` header on each request, or by using the `/stores/switch` endpoint
+- The `/stores` endpoint returns only stores the user has access to
+- When viewing a specific store, the system verifies the user has access to that store
+
 ---
 
 **Last Updated:** 2024-11-22
+
+## Store Context Notes
+
+- Users can be assigned to multiple stores via the many-to-many relationship
+- Each user has a default store that is used when `X-Store-ID` header is not provided
+- The active store context automatically filters all data queries for models using the `BelongsToStore` trait
+- Users can only access stores they are assigned to
+- Store switching is done via the `X-Store-ID` header on each request, or by using the `/stores/switch` endpoint
 

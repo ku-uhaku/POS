@@ -16,8 +16,8 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             RolePermissionSeeder::class,
+            StoreSeeder::class, // Stores must be created before users
             UserSeeder::class,
-            StoreSeeder::class,
             SettingSeeder::class,
         ]);
     }

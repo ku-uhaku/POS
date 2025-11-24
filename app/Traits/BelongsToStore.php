@@ -3,6 +3,7 @@
 namespace App\Traits;
 
 use App\Models\Store;
+use App\Services\StoreContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +18,7 @@ trait BelongsToStore
         // Ensure store_id is set when creating if not provided
         static::creating(function (Model $model): void {
             if (! $model->store_id && $model->isFillable('store_id')) {
-                $storeId = static::getStoreIdFromUser();
+                $storeId = static::getStoreIdFromContext();
                 if ($storeId) {
                     $model->store_id = $storeId;
                 }
@@ -42,11 +43,11 @@ trait BelongsToStore
     }
 
     /**
-     * Scope a query to only include records for the current user's store.
+     * Scope a query to only include records for the active store.
      */
-    public function scopeForCurrentUserStore($query)
+    public function scopeForActiveStore($query)
     {
-        $storeId = static::getStoreIdFromUser();
+        $storeId = static::getStoreIdFromContext();
         if ($storeId) {
             return $query->where('store_id', $storeId);
         }
@@ -55,22 +56,37 @@ trait BelongsToStore
     }
 
     /**
-     * Get the store_id from the authenticated user.
+     * Scope a query to only include records for the current user's store.
+     *
+     * @deprecated Use scopeForActiveStore() instead
      */
-    protected static function getStoreIdFromUser(): ?int
+    public function scopeForCurrentUserStore($query)
     {
-        // Try sanctum guard first (for API)
+        return static::scopeForActiveStore($query);
+    }
+
+    /**
+     * Get the store_id from the active store context or user's default store.
+     */
+    protected static function getStoreIdFromContext(): ?int
+    {
+        // First, try to get from StoreContext (set by middleware)
+        $activeStoreId = StoreContext::getActiveStore();
+        if ($activeStoreId) {
+            return $activeStoreId;
+        }
+
+        // Fall back to user's default store
         if (Auth::guard('sanctum')->check()) {
             $user = Auth::guard('sanctum')->user();
 
-            return $user->store_id ?? null;
+            return $user->default_store_id ?? $user->store_id ?? null;
         }
 
-        // Fall back to default guard (for web)
         if (Auth::check()) {
             $user = Auth::user();
 
-            return $user->store_id ?? null;
+            return $user->default_store_id ?? $user->store_id ?? null;
         }
 
         return null;

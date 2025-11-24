@@ -20,7 +20,10 @@ class StoreController extends Controller
             abort(403, 'You do not have the required permission to perform this action.');
         }
 
-        $stores = Store::withCount('users')->paginate(15);
+        $user = auth('sanctum')->user();
+        // Show only stores the user has access to
+        $storeIds = $user->stores()->pluck('stores.id')->toArray();
+        $stores = Store::whereIn('id', $storeIds)->withCount('users')->paginate(15);
 
         return $this->successResponse([
             'stores' => StoreResource::collection($stores),
@@ -60,6 +63,12 @@ class StoreController extends Controller
             abort(403, 'You do not have the required permission to perform this action.');
         }
 
+        $user = auth('sanctum')->user();
+        // Verify user has access to this store
+        if (! $user->hasAccessToStore($store->id)) {
+            abort(403, 'You do not have access to this store.');
+        }
+
         return $this->successResponse([
             'store' => new StoreResource($store->load('users')),
         ], 'Store retrieved successfully');
@@ -95,5 +104,32 @@ class StoreController extends Controller
         $store->delete();
 
         return $this->successResponse(null, 'Store deleted successfully');
+    }
+
+    /**
+     * Switch active store for the current user.
+     * Note: The actual switching happens via X-Store-ID header on subsequent requests.
+     */
+    public function switchStore(\Illuminate\Http\Request $request): JsonResponse
+    {
+        $user = auth('sanctum')->user();
+
+        $request->validate([
+            'store_id' => ['required', 'integer', 'exists:stores,id'],
+        ]);
+
+        $storeId = $request->input('store_id');
+
+        // Verify user has access to this store
+        if (! $user->hasAccessToStore($storeId)) {
+            return $this->forbiddenResponse('You do not have access to this store.');
+        }
+
+        $store = Store::findOrFail($storeId);
+
+        return $this->successResponse([
+            'store' => new StoreResource($store),
+            'message' => 'Store switched successfully. Use X-Store-ID header in subsequent requests.',
+        ], 'Store switched successfully');
     }
 }
