@@ -52,27 +52,7 @@ class UserResource extends JsonResource
             'updated_by' => $this->when($this->updated_by, $this->updated_by),
             'deleted_at' => $this->when($this->deleted_at, fn () => $this->deleted_at->toIso8601String()),
             'deleted_by' => $this->when($this->deleted_by, $this->deleted_by),
-            'creator' => $this->whenLoaded('creator', fn () => [
-                'id' => $this->creator->id,
-                'first_name' => $this->creator->first_name,
-                'last_name' => $this->creator->last_name,
-                'full_name' => $this->creator->full_name,
-                'email' => $this->creator->email,
-            ]),
-            'updater' => $this->whenLoaded('updater', fn () => [
-                'id' => $this->updater->id,
-                'first_name' => $this->updater->first_name,
-                'last_name' => $this->updater->last_name,
-                'full_name' => $this->updater->full_name,
-                'email' => $this->updater->email,
-            ]),
-            'deleter' => $this->whenLoaded('deleter', fn () => [
-                'id' => $this->deleter->id,
-                'first_name' => $this->deleter->first_name,
-                'last_name' => $this->deleter->last_name,
-                'full_name' => $this->deleter->full_name,
-                'email' => $this->deleter->email,
-            ]),
+            
         ];
     }
 }
