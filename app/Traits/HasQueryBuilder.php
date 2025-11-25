@@ -203,3 +203,4 @@ trait HasQueryBuilder
         return $this->scopeBulkFilter($query, $mappedFilters);
     }
 }
+

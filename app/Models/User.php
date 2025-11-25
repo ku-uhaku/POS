@@ -4,6 +4,7 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use App\Traits\HasAuditTrail;
+use App\Traits\HasQueryBuilder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -17,7 +18,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasApiTokens, HasAuditTrail, HasFactory, HasRoles, Notifiable, SoftDeletes;
+    use HasApiTokens, HasAuditTrail, HasFactory, HasQueryBuilder, HasRoles, Notifiable, SoftDeletes;
 
     /**
      * The default guard name for Spatie Permission.
@@ -99,51 +100,51 @@ class User extends Authenticatable
         return $this->belongsTo(Store::class);
     }
 
-        /**
-         * Get all stores assigned to the user (many-to-many).
-         */
-        public function stores(): BelongsToMany
-        {
-            return $this->belongsToMany(Store::class, 'user_store')->withTimestamps();
+    /**
+     * Get all stores assigned to the user (many-to-many).
+     */
+    public function stores(): BelongsToMany
+    {
+        return $this->belongsToMany(Store::class, 'user_store')->withTimestamps();
+    }
+
+    /**
+     * Get the user's default store.
+     */
+    public function defaultStore(): BelongsTo
+    {
+        return $this->belongsTo(Store::class, 'default_store_id');
+    }
+
+    /**
+     * Determine if the user has access to a given store.
+     */
+    public function hasAccessToStore(int $storeId): bool
+    {
+        if ($this->store_id === $storeId || $this->default_store_id === $storeId) {
+            return true;
         }
 
-        /**
-         * Get the user's default store.
-         */
-        public function defaultStore(): BelongsTo
-        {
-            return $this->belongsTo(Store::class, 'default_store_id');
+        if ($this->relationLoaded('stores')) {
+            return $this->stores->contains('id', $storeId);
         }
 
-        /**
-         * Determine if the user has access to a given store.
-         */
-        public function hasAccessToStore(int $storeId): bool
-        {
-            if ($this->store_id === $storeId || $this->default_store_id === $storeId) {
-                return true;
-            }
+        return $this->stores()->where('stores.id', $storeId)->exists();
+    }
 
-            if ($this->relationLoaded('stores')) {
-                return $this->stores->contains('id', $storeId);
-            }
-
-            return $this->stores()->where('stores.id', $storeId)->exists();
+    /**
+     * Set the user's default store.
+     *
+     * @throws InvalidArgumentException
+     */
+    public function setDefaultStore(int $storeId): void
+    {
+        if (! $this->hasAccessToStore($storeId)) {
+            throw new InvalidArgumentException('User does not have access to this store.');
         }
 
-        /**
-         * Set the user's default store.
-         *
-         * @throws InvalidArgumentException
-         */
-        public function setDefaultStore(int $storeId): void
-        {
-            if (! $this->hasAccessToStore($storeId)) {
-                throw new InvalidArgumentException('User does not have access to this store.');
-            }
-
-            $this->update([
-                'default_store_id' => $storeId,
-            ]);
-        }
+        $this->update([
+            'default_store_id' => $storeId,
+        ]);
+    }
 }

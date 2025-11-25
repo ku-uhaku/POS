@@ -14,11 +14,11 @@ class Contact extends Model
 {
     use BelongsToStore;
     use HasAuditTrail;
+
     /** @use HasFactory<\Database\Factories\ContactFactory> */
     use HasFactory;
 
     use HasQueryBuilder;
-
     use SoftDeletes;
 
     /**
@@ -67,25 +67,6 @@ class Contact extends Model
         }
 
         return $query->where('client_type', $clientType);
-    }
-
-    /**
-     * Scope to apply a search query.
-     */
-    public function scopeSearch($query, ?string $search)
-    {
-        if (! $search) {
-            return $query;
-        }
-
-        return $query->where(function ($builder) use ($search) {
-            $builder
-                ->where('contact_name', 'like', "%{$search}%")
-                ->orWhere('company_name', 'like', "%{$search}%")
-                ->orWhere('email', 'like', "%{$search}%")
-                ->orWhere('phone', 'like', "%{$search}%")
-                ->orWhere('mobile', 'like', "%{$search}%");
-        });
     }
 
     /**

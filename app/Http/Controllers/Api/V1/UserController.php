@@ -17,12 +17,16 @@ class UserController extends Controller
     public function index(): JsonResponse
     {
         if (! auth('sanctum')->user()->can('view users')) {
-            abort(403, 'You do not have the required permission to perform this action.vsss');
+            abort(403, 'You do not have the required permission to perform this action.');
         }
+
         $activeStoreId = StoreContext::getActiveStore();
 
-        $usersQuery = User::with(['roles', 'store', 'defaultStore', 'stores']);
+        // Build query using HasQueryBuilder trait methods
+        $usersQuery = User::query()
+            ->withRelations(['roles', 'store', 'defaultStore', 'stores']);
 
+        // Filter by active store if set
         if ($activeStoreId) {
             $usersQuery->where(function ($query) use ($activeStoreId) {
                 $query->where('store_id', $activeStoreId)
@@ -33,7 +37,8 @@ class UserController extends Controller
             });
         }
 
-        $users = $usersQuery->paginate(15);
+        // Apply pagination using trait method
+        $users = $usersQuery->paginateWithDefaults(15);
 
         return $this->successResponse([
             'users' => UserResource::collection($users),
